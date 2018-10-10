@@ -1,4 +1,8 @@
-# Simple RabbitMQ / .Net Core quote service.
+# Compare the Mongoose 
+
+.. image:: images/ctm.png
+
+A simple RabbitMQ / .Net Core architectural demonstration
 
 ## Instructions: 
 
