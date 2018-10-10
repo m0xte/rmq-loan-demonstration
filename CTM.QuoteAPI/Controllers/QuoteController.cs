@@ -1,4 +1,5 @@
-﻿using CTM.QuoteAPI.Model;
+﻿using CTM.Contracts;
+using CTM.QuoteAPI.Model;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
@@ -10,21 +11,40 @@ namespace CTM.QuoteAPI.Controllers
     public class QuoteController : Controller
     {
         IQuoteStore quoteStore;
+        IQuoteAggregator quoteAggregator;
 
-        public QuoteController(IQuoteStore quoteStore)
+        public QuoteController(IQuoteStore quoteStore, IQuoteAggregator quoteAggregator)
         {
             this.quoteStore = quoteStore;
+            this.quoteAggregator = quoteAggregator;
         }
 
+        /// <summary>
+        /// Create a new quote
+        /// </summary>
+        /// <param name="request">New quote request</param>
+        /// <returns>Correlation ID</returns>
         [HttpPost("new")]
         public ActionResult<NewQuoteResponse> NewQuote(NewQuoteRequest request)
         {
+            // Create new quote session
             var correlationId = quoteStore.NewQuoteSession();
 
-            QuoteEngine.SendQuoteRequest(correlationId);
-            QuoteEngine.SendQuoteRequest(correlationId);
+            // Translate the quote request into our internal data structure
+            var quoteRequest = new QuoteRequest
+            {
+                CorrelationId = correlationId,
+                Name = request.Name
+            };
 
-            return new NewQuoteResponse { CorrelationId = correlationId, QuoteEngineCount = 2 };
+            // Send to aggregator
+            quoteAggregator.Aggregate(quoteRequest);
+
+            // Return correlation id
+            return new NewQuoteResponse
+            {
+                CorrelationId = correlationId
+            };
         }
 
         [HttpPost("result")]

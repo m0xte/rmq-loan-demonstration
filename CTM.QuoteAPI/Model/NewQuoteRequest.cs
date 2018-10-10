@@ -7,6 +7,6 @@ namespace CTM.QuoteAPI.Model
 {
     public class NewQuoteRequest
     {
-        string Name { get; set; }
+        public string Name { get; set; }
     }
 }

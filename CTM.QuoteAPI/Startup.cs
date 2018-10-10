@@ -29,8 +29,20 @@ namespace CTM.QuoteAPI
         {
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
 
+            // Register redis quote store
             services.AddSingleton<IQuoteStore, QuoteStore>();
 
+            // Register aggregator
+            services.AddSingleton<IQuoteAggregator, QuoteAggregator>();
+
+            // Register individual quote providers
+            services.AddSingleton<IEnumerable<IQuoteProvider>>(new List<IQuoteProvider>
+            {
+                new GenericQuoteProvider("QuoteProviderA"),
+                new GenericQuoteProvider("QuoteProviderB")
+            });
+
+            // Register redis connection
             services.AddSingleton<IConnectionMultiplexer>(ConnectionMultiplexer.Connect("localhost"));
         }
 

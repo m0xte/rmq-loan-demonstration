@@ -14,7 +14,7 @@ A simple RabbitMQ / .Net Core architectural demonstration
 4. Install redis-server in WSL
 5. Start redis-server in WSL 
 6. Set both projects to run
-7. Run as many of the QuoteServer instances as you need to scale!
+7. Run as many of the QuoteProvider project instances as you need to scale!
 
 ## To use:
 
@@ -30,15 +30,13 @@ To get the quote results:
 
 ## How it works:
 
-1. End user calls into QuoteService to request a new Quote
-2. This sends a message to each provider queue via RabbitMQ
-3. The quote service for each provider will process this however is necessary. Usually a latent operation.
-4. The quote service calls the service back to deliver a result.
+1. End user calls into quote service to request a new quote
+2. This sends a message to each provider queue via aggregator RabbitMQ
+3. The quote provider processes the quotes. Usually a latent operation.
+4. The quote provider calls the quote service back to deliver a result.
 5. The end user polls for results (or may notify if you need to - up to the implementor to do)
 
 ## Notes
 
 * The messaging here is durable and will retry until successful.
-* In real life there would be further abstraction of messaging contracts
-* In real life each provider would have their own QuoteServer instance and a queue per service.
 * In real life error handling would be better :)

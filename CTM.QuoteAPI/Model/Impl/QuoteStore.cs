@@ -3,6 +3,7 @@ using StackExchange.Redis;
 using System;
 using System.Linq;
 using System.Collections.Generic;
+using CTM.Contracts;
 
 namespace CTM.QuoteAPI.Model.Impl
 {

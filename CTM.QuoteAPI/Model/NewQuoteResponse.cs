@@ -8,6 +8,5 @@ namespace CTM.QuoteAPI.Model
     public class NewQuoteResponse
     {
         public Guid CorrelationId { get; set; }
-        public int QuoteEngineCount { get; set; }
     }
 }

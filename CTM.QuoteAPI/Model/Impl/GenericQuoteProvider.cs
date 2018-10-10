@@ -1,32 +1,32 @@
-﻿using Newtonsoft.Json;
+﻿using CTM.Contracts;
+using Newtonsoft.Json;
 using RabbitMQ.Client;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 
-namespace CTM.QuoteAPI.Model
+namespace CTM.QuoteAPI.Model.Impl
 {
-    public class QuoteEngine
+    public class GenericQuoteProvider : IQuoteProvider
     {
-        static string Queue = "quote_queue";
+        string queueName;
 
-        public static void SendQuoteRequest(Guid correlationId)
+        public GenericQuoteProvider(string queueName)
+        {
+            this.queueName = queueName;
+        }
+
+        public void Send(QuoteRequest quoteRequest)
         {
             var factory = new ConnectionFactory() { HostName = "localhost" };
             using (var connection = factory.CreateConnection())
             using (var channel = connection.CreateModel())
             {
-                channel.QueueDeclare(queue: Queue,
+                channel.QueueDeclare(queue: queueName,
                                      durable: true,
                                      exclusive: false,
                                      autoDelete: false,
                                      arguments: null);
 
-                var message = new QuoteRequest() { CorrelationId = correlationId };
-
-                var json = JsonConvert.SerializeObject(message);
+                var json = JsonConvert.SerializeObject(quoteRequest);
 
                 var body = Encoding.UTF8.GetBytes(json);
 
@@ -34,11 +34,10 @@ namespace CTM.QuoteAPI.Model
                 properties.Persistent = true;
 
                 channel.BasicPublish(exchange: "",
-                                     routingKey: Queue,
+                                     routingKey: queueName,
                                      basicProperties: properties,
                                      body: body);
             }
-
         }
     }
 }
