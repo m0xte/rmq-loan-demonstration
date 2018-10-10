@@ -1,4 +1,7 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using StackExchange.Redis;
+using System;
+using System.Linq;
 using System.Collections.Generic;
 
 namespace CTM.QuoteAPI.Model.Impl
@@ -8,42 +11,37 @@ namespace CTM.QuoteAPI.Model.Impl
     /// </summary>
     public class QuoteStore : IQuoteStore
     {
-        static Dictionary<Guid, QuoteSession> store = new Dictionary<Guid, QuoteSession>();
-        static object ctx = new object();
+        IConnectionMultiplexer connectionMultiplexer;
+        
+        public QuoteStore(IConnectionMultiplexer connectionMultiplexer)
+        {
+            this.connectionMultiplexer = connectionMultiplexer;
+        }
 
         public Guid NewQuoteSession()
         {
-            var guid = Guid.NewGuid();
-            var session = new QuoteSession();
-            lock (ctx)
-            {
-                store.Add(guid, session);
-            }
-            return guid;
+            return Guid.NewGuid();
         }
 
         public bool AddQuoteResult(QuoteResult quoteResult)
         {
-            lock (ctx)
-            {
-                var guid = quoteResult.CorrelationId;
-                if (!store.ContainsKey(guid))
-                    return false;
-                var session = store[guid] as QuoteSession;
-                session.QuoteResults.Add(quoteResult);
-                return true;
-            }
+            var db = connectionMultiplexer.GetDatabase();
+
+            db.ListLeftPush(
+                key: $"session_{quoteResult.CorrelationId}_results",
+                value: JsonConvert.SerializeObject(quoteResult));
+
+            return true;
         }
 
         public List<QuoteResult> GetQuoteResults(Guid guid)
         {
-            lock (ctx)
-            {
-                if (!store.ContainsKey(guid))
-                    return new List<QuoteResult>();
-                var session = store[guid] as QuoteSession;
-                return session.QuoteResults;
-            }
+            var db = connectionMultiplexer.GetDatabase();
+
+            return db
+                .ListRange(key: $"session_{guid}_results")
+                .Select(s => JsonConvert.DeserializeObject<QuoteResult>(s))
+                .ToList();
         }
     }
 }
