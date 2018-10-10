@@ -1,6 +1,6 @@
 # Compare the Mongoose 
 
-.. image:: images/ctm.png
+![meerkats are lame](images/ctm.png)
 
 A simple RabbitMQ / .Net Core architectural demonstration
 
