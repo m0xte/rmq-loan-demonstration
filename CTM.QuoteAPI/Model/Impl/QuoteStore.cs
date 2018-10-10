@@ -1,24 +1,17 @@
 ﻿using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
-namespace CTM.QuoteAPI.Model
+namespace CTM.QuoteAPI.Model.Impl
 {
     /// <summary>
     /// Quote correlation store (for redis!)
     /// </summary>
-    public static class QuoteStore
+    public class QuoteStore : IQuoteStore
     {
         static Dictionary<Guid, QuoteSession> store = new Dictionary<Guid, QuoteSession>();
         static object ctx = new object();
 
-        /// <summary>
-        /// Add a new quote. Lifetime in redis would be around 2-3 hours potentially or the life of the quote
-        /// </summary>
-        /// <returns></returns>
-        static public Guid NewQuote()
+        public Guid NewQuoteSession()
         {
             var guid = Guid.NewGuid();
             var session = new QuoteSession();
@@ -29,7 +22,7 @@ namespace CTM.QuoteAPI.Model
             return guid;
         }
 
-        static public bool AddQuoteResult(QuoteResult quoteResult)
+        public bool AddQuoteResult(QuoteResult quoteResult)
         {
             lock (ctx)
             {
@@ -42,7 +35,7 @@ namespace CTM.QuoteAPI.Model
             }
         }
 
-        static public List<QuoteResult> GetResults(Guid guid)
+        public List<QuoteResult> GetQuoteResults(Guid guid)
         {
             lock (ctx)
             {

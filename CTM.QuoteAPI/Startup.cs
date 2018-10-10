@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using CTM.QuoteAPI.Model;
+using CTM.QuoteAPI.Model.Impl;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
@@ -25,6 +27,8 @@ namespace CTM.QuoteAPI
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
+
+            services.AddSingleton<IQuoteStore, QuoteStore>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

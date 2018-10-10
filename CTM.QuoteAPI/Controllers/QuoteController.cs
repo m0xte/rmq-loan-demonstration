@@ -1,9 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using CTM.QuoteAPI.Model;
+﻿using CTM.QuoteAPI.Model;
 using Microsoft.AspNetCore.Mvc;
+using System;
+using System.Collections.Generic;
 
 namespace CTM.QuoteAPI.Controllers
 {
@@ -11,10 +9,17 @@ namespace CTM.QuoteAPI.Controllers
     [ApiController]
     public class QuoteController : Controller
     {
+        IQuoteStore quoteStore;
+
+        public QuoteController(IQuoteStore quoteStore)
+        {
+            this.quoteStore = quoteStore;
+        }
+
         [HttpPost("new")]
         public ActionResult<NewQuoteResponse> NewQuote(NewQuoteRequest request)
         {
-            var correlationId = QuoteStore.NewQuote();
+            var correlationId = quoteStore.NewQuoteSession();
 
             QuoteEngine.SendQuoteRequest(correlationId);
             QuoteEngine.SendQuoteRequest(correlationId);
@@ -25,13 +30,13 @@ namespace CTM.QuoteAPI.Controllers
         [HttpPost("result")]
         public void AddQuoteResult(QuoteResult quoteResult)
         {
-            QuoteStore.AddQuoteResult(quoteResult);
+            quoteStore.AddQuoteResult(quoteResult);
         }
 
         [HttpGet("results/{id}")]
         public ActionResult<IEnumerable<QuoteResult>> GetQuoteResults(Guid id)
         {
-            return QuoteStore.GetResults(id);
+            return quoteStore.GetQuoteResults(id);
         }
     }
 }
