@@ -1,5 +1,7 @@
 # Compare the Mongoose 
 
+Because meerkats are lame
+
 ![meerkats are lame](images/ctm.png)
 
 A simple RabbitMQ / .Net Core architectural demonstration
