@@ -6,14 +6,23 @@ Because meerkats are lame
 
 A simple RabbitMQ / .Net Core architectural demonstration
 
-## Instructions: 
+## Requirements:
+
+* Computer
+* .Net Core 2.1
+
+## Instructions
+
+Instructions are currently for windows only. Erlang OTP, RabbitMQ and redis are
+available for OSX and Linux so there should be no portability issues with this 
+example.
 
 1. Install erlang OTP from http://erlang.org/download/otp_win64_21.1.exe
 2. Install RabbitMQ from https://github.com/rabbitmq/rabbitmq-server/releases/download/v3.7.8/rabbitmq-server-3.7.8.exe
 3. (default installs fine for both of the above)
 4. Install redis-server in WSL
 5. Start redis-server in WSL 
-6. Set all projects to run on startup (both quote providers and the quote API server)
+6. Set all projects to run on startup if using VS or run using dotnet run (both quote providers and the quote API server)
 7. Run as many of the QuoteProvider project instances as you need to scale!
 
 ## To use:
