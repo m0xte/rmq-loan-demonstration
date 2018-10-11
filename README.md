@@ -22,11 +22,13 @@ To request a quote:
 
 `$ curl -X POST -H "Content-type: application/json" -d "{'Name':'bob'}" http://localhost:1659/api/quote/new`
 
-This will return a correlation id
+This will return a correlation id which can be used to retrieve quotes later.
 
 To get the quote results:
 
-`$ curl http://localhost:1659/api/quote/results/GUIDHERE`
+`$ curl http://localhost:1659/api/quote/results/correlationId`
+
+Replace correlationId with the result from the initial new quote request
 
 ## How it works:
 
@@ -38,5 +40,7 @@ To get the quote results:
 
 ## Notes
 
-* The messaging here is durable and will retry until successful.
+* The messaging and operations here are fully durable through all component failures
+  and will retry until there is an atomic success.
+* All requests are low latency
 * In real life error handling would be better :)
