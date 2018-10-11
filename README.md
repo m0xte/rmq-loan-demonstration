@@ -13,7 +13,7 @@ A simple RabbitMQ / .Net Core architectural demonstration
 3. (default installs fine for both of the above)
 4. Install redis-server in WSL
 5. Start redis-server in WSL 
-6. Set both projects to run
+6. Set all projects to run on startup (both quote providers and the quote API server)
 7. Run as many of the QuoteProvider project instances as you need to scale!
 
 ## To use:
