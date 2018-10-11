@@ -17,8 +17,7 @@ namespace CTM.QuoteProviderB
                 {
                     Amount = 1231,
                     CorrelationId = quoteRequest.CorrelationId,
-                    Name = "Provider B Loans: offer 1",
-                    Provider = "Privider B"
+                    Product = "Provider B Loans: offer 1"
                 }
             };
         }

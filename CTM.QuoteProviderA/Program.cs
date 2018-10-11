@@ -17,15 +17,13 @@ namespace CTM.QuoteProviderA
                 {
                     Amount = 443,
                     CorrelationId = quoteRequest.CorrelationId,
-                    Name = "Provider A Loans: offer 1",
-                    Provider = "Provider A"
+                    Product = "Provider A Loans: offer 1"
                 },
                 new QuoteResult
                 {
                     Amount = 91,
                     CorrelationId = quoteRequest.CorrelationId,
-                    Name = "Provider A Loans: offer 2",
-                    Provider = "Provider A"
+                    Product = "Provider A Loans: offer 2"
                 }
 
             };
