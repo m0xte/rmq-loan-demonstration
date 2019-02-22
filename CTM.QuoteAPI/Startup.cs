@@ -54,7 +54,14 @@ namespace CTM.QuoteAPI
                 app.UseDeveloperExceptionPage();
             }
 
-            app.UseMvc();
+            app.UseMvc(routes =>
+            {
+                routes.MapRoute(name: "default", template: "", defaults: new
+                {
+                    controller = "Home",
+                    action = "Index"
+                });
+            });
         }
     }
 }
