@@ -6,6 +6,6 @@ public class HomeController : Controller
     [HttpGet]
     public string Index()
     {
-        return "<h1>Hello, world</h1>";
+        return "\n\n<h1>Hello, world</h1>\n\n\n";
     } 
 }
