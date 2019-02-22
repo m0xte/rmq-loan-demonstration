@@ -1,23 +1,23 @@
 ﻿using CTM.Contracts;
 using CTM.QuoteAPI.Model;
 using CTM.QuoteAPI.Model.Impl;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
+using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
 namespace CTM.QuoteAPI.Tests.Model.Impl
 {
-    [TestClass]
+    [TestFixture]
     public class TestQuoteAggregator
     {
         IQuoteAggregator underTest;
         Mock<IQuoteProvider> mockQuoteProvider1;
         Mock<IQuoteProvider> mockQuoteProvider2;
 
-        [TestInitialize]
-        public void Initialize()
+        [SetUp]
+        public void SetUp()
         {
             mockQuoteProvider1 = new Mock<IQuoteProvider>();
             mockQuoteProvider2 = new Mock<IQuoteProvider>();
@@ -28,7 +28,7 @@ namespace CTM.QuoteAPI.Tests.Model.Impl
             });
         }
 
-        [TestMethod]
+        [Test]
         public void TestAllProvidersCalled()
         {
             var req = new QuoteRequest();
