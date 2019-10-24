@@ -1,5 +1,6 @@
 ﻿using CTM.Contracts;
 using CTM.QuoteProviderBase;
+using StackExchange.Redis;
 using System;
 using System.Collections.Generic;
 
@@ -7,8 +8,10 @@ namespace CTM.QuoteProviderB
 {
     public class Program : BaseProgram
     {
-        protected override string QueueName => "QuoteProviderB";
-
+        public Program(IConnectionMultiplexer connectionMultiplexer, string receiveChannel, string replyChannel) :
+                   base(connectionMultiplexer, receiveChannel, replyChannel)
+        {
+        }
         protected override IEnumerable<QuoteResult> GetQuotes(QuoteRequest quoteRequest)
         {
             return new List<QuoteResult>
@@ -24,7 +27,8 @@ namespace CTM.QuoteProviderB
 
         static void Main()
         {
-            new Program().Run();
+            var cm = ConnectionMultiplexer.Connect("localhost");
+            new Program(cm, "QuoteProviderB", "QuoteResult").Run();
         }
     }
 }

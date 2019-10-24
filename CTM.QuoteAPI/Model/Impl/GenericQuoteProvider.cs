@@ -1,43 +1,25 @@
 ﻿using CTM.Contracts;
 using Newtonsoft.Json;
-using RabbitMQ.Client;
-using System.Text;
+using StackExchange.Redis;
 
 namespace CTM.QuoteAPI.Model.Impl
 {
     public class GenericQuoteProvider : IQuoteProvider
     {
-        string queueName;
+        string channelName;
+        IConnectionMultiplexer connectionMultiplexer;
 
-        public GenericQuoteProvider(string queueName)
+        public GenericQuoteProvider(IConnectionMultiplexer connectionMultiplexer, string channelName)
         {
-            this.queueName = queueName;
+            this.connectionMultiplexer = connectionMultiplexer;
+            this.channelName = channelName;
         }
 
         public void Send(QuoteRequest quoteRequest)
         {
-            var factory = new ConnectionFactory() { HostName = "localhost" };
-            using (var connection = factory.CreateConnection())
-            using (var channel = connection.CreateModel())
-            {
-                channel.QueueDeclare(queue: queueName,
-                                     durable: true,
-                                     exclusive: false,
-                                     autoDelete: false,
-                                     arguments: null);
-
-                var json = JsonConvert.SerializeObject(quoteRequest);
-
-                var body = Encoding.UTF8.GetBytes(json);
-
-                var properties = channel.CreateBasicProperties();
-                properties.Persistent = true;
-
-                channel.BasicPublish(exchange: "",
-                                     routingKey: queueName,
-                                     basicProperties: properties,
-                                     body: body);
-            }
+            var db = connectionMultiplexer.GetDatabase();
+            var json = JsonConvert.SerializeObject(quoteRequest);
+            db.ListLeftPush(channelName, json);
         }
     }
 }

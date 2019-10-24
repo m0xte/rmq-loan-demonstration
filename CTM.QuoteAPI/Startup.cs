@@ -27,10 +27,10 @@ namespace CTM.QuoteAPI
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
-
+            var cm = ConnectionMultiplexer.Connect("localhost");
+            var quoteStore = new QuoteStore(cm);
             // Register redis quote store
-            services.AddSingleton<IQuoteStore, QuoteStore>();
+            services.AddSingleton<IQuoteStore>(quoteStore);
 
             // Register aggregator
             services.AddSingleton<IQuoteAggregator, QuoteAggregator>();
@@ -38,29 +38,30 @@ namespace CTM.QuoteAPI
             // Register individual quote providers
             services.AddSingleton<IEnumerable<IQuoteProvider>>(new List<IQuoteProvider>
             {
-                new GenericQuoteProvider("QuoteProviderA"),
-                new GenericQuoteProvider("QuoteProviderB")
+                new GenericQuoteProvider(cm, "QuoteProviderA"),
+                new GenericQuoteProvider(cm, "QuoteProviderB")
             });
 
             // Register redis connection
-            services.AddSingleton<IConnectionMultiplexer>(ConnectionMultiplexer.Connect("redis"));
+            services.AddSingleton<IConnectionMultiplexer>(cm);
+
+            var quoteResponseReceiver = new QuoteResponseReceiver(cm, quoteStore, "QuoteResult");
+            quoteResponseReceiver.StartReceiving();
+
+            services
+                .AddControllers()
+                .AddNewtonsoftJson();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env)
-        {
-            if (env.IsDevelopment())
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+        {       
+            app.UseDeveloperExceptionPage();
+            app.UseRouting();
+            app.UseStaticFiles();
+            app.UseEndpoints(endpoints =>
             {
-                app.UseDeveloperExceptionPage();
-            }
-
-            app.UseMvc(routes =>
-            {
-                routes.MapRoute(name: "default", template: "", defaults: new
-                {
-                    controller = "Home",
-                    action = "Index"
-                });
+                endpoints.MapControllers();
             });
         }
     }

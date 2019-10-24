@@ -4,26 +4,21 @@ Because meerkats are lame
 
 ![meerkats are lame](images/ctm.png)
 
-A simple RabbitMQ / .Net Core architectural demonstration
+A simple Redis / .Net Core architectural demonstration
 
 ## Requirements:
 
 * Computer
-* .Net Core 2.1
+* .Net Core 3
 
 ## Instructions
 
-Instructions are currently for windows only. Erlang OTP, RabbitMQ and redis are
-available for OSX and Linux so there should be no portability issues with this 
-example.
+Instructions are currently for windows only. Redis is available for OSX and Linux so 
+there should be no portability issues with this example.
 
-1. Install erlang OTP from http://erlang.org/download/otp_win64_21.1.exe
-2. Install RabbitMQ from https://github.com/rabbitmq/rabbitmq-server/releases/download/v3.7.8/rabbitmq-server-3.7.8.exe
-3. (default installs fine for both of the above)
-4. Install redis-server in WSL
-5. Start redis-server in WSL 
-6. Set all projects to run on startup if using VS or run using dotnet run (both quote providers and the quote API server)
-7. Run as many of the QuoteProvider project instances as you need to scale!
+1. Install redis-server in WSL or natively
+2. Start redis-server in WSL 
+3. Set all projects to run on startup if using VS or run using dotnet run (both quote providers and the quote API server)
 
 ## To use:
 
@@ -42,14 +37,11 @@ Replace correlationId with the result from the initial new quote request
 ## How it works:
 
 1. End user calls into quote service to request a new quote
-2. This sends a message to each provider queue via aggregator RabbitMQ
+2. This sends a message to each provider via redis queue
 3. The quote provider processes the quotes. Usually a latent operation.
-4. The quote provider calls the quote service back to deliver a result.
+4. The quote provider publishes a response message to a response queue
 5. The end user polls for results (or may notify if you need to - up to the implementor to do)
 
 ## Notes
 
-* The messaging and operations here are fully durable through all component failures
-  and will retry until there is an atomic success.
-* All requests are low latency
 * In real life error handling would be better :)

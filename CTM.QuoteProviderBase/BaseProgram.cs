@@ -1,22 +1,24 @@
 ﻿using CTM.Contracts;
 using Newtonsoft.Json;
-using RabbitMQ.Client;
-using RabbitMQ.Client.Events;
+using StackExchange.Redis;
 using System;
-using System.Linq;
 using System.Collections.Generic;
-using System.Net.Http;
-using System.Text;
 using System.Threading;
 
 namespace CTM.QuoteProviderBase
 {
     public abstract class BaseProgram
     {
-        /// <summary>
-        /// Queue name
-        /// </summary>
-        protected abstract string QueueName { get; }
+        IConnectionMultiplexer connectionMultiplexer;
+        string receiveChannel;
+        string replyChannel;
+
+        protected BaseProgram(IConnectionMultiplexer connectionMultiplexer, string receiveChannel, string replyChannel)
+        {
+            this.connectionMultiplexer = connectionMultiplexer;
+            this.receiveChannel = receiveChannel;
+            this.replyChannel = replyChannel;
+        }
      
         /// <summary>
         /// quote handler
@@ -27,47 +29,28 @@ namespace CTM.QuoteProviderBase
         
         public void Run()
         { 
-            Console.WriteLine($"Servicing quotes in queue {QueueName}");
-            var factory = new ConnectionFactory() { HostName = "localhost" };
-            using (var connection = factory.CreateConnection())
-            using (var channel = connection.CreateModel())
+            Console.WriteLine($"Servicing quotes in channel {receiveChannel}");
+            Console.WriteLine("Waiting for work...");
+
+            var db = connectionMultiplexer.GetDatabase();
+            while(true)
             {
-                channel.QueueDeclare(queue: QueueName, durable: true, exclusive: false, autoDelete: false, arguments: null);
-
-                channel.BasicQos(prefetchCount: 0, prefetchSize: 0, global: false);
-
-                Console.WriteLine("Waiting for work...");
-
-                var consumer = new EventingBasicConsumer(channel);
-                consumer.Received += (model, es) =>
+                var message = db.ListRightPop(receiveChannel);
+                if (message.IsNull)
                 {
-                    var body = es.Body;
-                    var message = Encoding.UTF8.GetString(body);
-                    var request = JsonConvert.DeserializeObject<QuoteRequest>(message);
+                    Thread.Sleep(500);
+                    continue;
+                }
 
-                    Console.WriteLine($"Handling request with correlation ID {request.CorrelationId}");
-
-
-                    var results = GetQuotes(request);
-            
-                    // call back into service per result
-                    var httpClient = new HttpClient();
-
-                    foreach (var result in results)
-                    {
-                        var jsonResult = JsonConvert.SerializeObject(result);
-
-                        var stringContent = new StringContent(jsonResult, Encoding.UTF8, "application/json");
-                        var bin = httpClient.PostAsync("http://localhost:1659/api/quote/result", stringContent).Result;
-                    }
-                    channel.BasicAck(deliveryTag: es.DeliveryTag, multiple: false);
-                    Console.WriteLine($"Returned {results.Count()} quotes");
-                };
-
-                channel.BasicConsume(queue: QueueName, autoAck: false, consumer: consumer);
-                Console.ReadLine();
+                var request = JsonConvert.DeserializeObject<QuoteRequest>(message);
+                Console.WriteLine($"Handling request with correlation ID {request.CorrelationId}");
+                var results = GetQuotes(request);
+                foreach (var result in results)
+                {
+                    var jsonResult = JsonConvert.SerializeObject(result);
+                    db.ListLeftPush(replyChannel, jsonResult);
+                }
             }
         }
-
     }
 }
