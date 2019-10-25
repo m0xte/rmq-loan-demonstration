@@ -7,6 +7,7 @@ using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Prometheus;
 
 namespace CTM.QuoteAPI
 {
@@ -14,6 +15,9 @@ namespace CTM.QuoteAPI
     {
         public static void Main(string[] args)
         {
+            var server = new MetricServer(hostname: "localhost", port: 6606);
+            server.Start();
+
             CreateWebHostBuilder(args).Build().Run();
         }
 

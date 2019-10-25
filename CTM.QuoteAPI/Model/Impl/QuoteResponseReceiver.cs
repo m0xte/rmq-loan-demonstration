@@ -1,5 +1,6 @@
 ﻿using CTM.Contracts;
 using Newtonsoft.Json;
+using Prometheus;
 using StackExchange.Redis;
 using System.Threading;
 
@@ -7,6 +8,10 @@ namespace CTM.QuoteAPI.Model.Impl
 {
     public class QuoteResponseReceiver
     {
+        private static readonly Counter PromReceivedCount =
+            Metrics.CreateCounter("quote_receiver_count", "Count of received quotes");
+
+
         IConnectionMultiplexer connectionMultiplexer;
         IQuoteStore quoteStore;
         string receiveChannel;
@@ -38,6 +43,7 @@ namespace CTM.QuoteAPI.Model.Impl
 
                 var response = JsonConvert.DeserializeObject<QuoteResult>(message);
                 quoteStore.AddQuoteResult(response);
+                PromReceivedCount.Inc();
             }
         }
     }

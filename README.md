@@ -42,6 +42,16 @@ Replace correlationId with the result from the initial new quote request
 4. The quote provider publishes a response message to a response queue
 5. The end user polls for results (or may notify if you need to - up to the implementor to do)
 
+## Using with prometheus
+
+1. Prometheus metrics endpoint is exposed at http://localhost:6606:/metrics . Add this to your prom
+   scrape configuration.
+2. Exposes `quote_receiver_count` and `quote_aggregator_count` as messages are received and aggregated.
+
 ## Notes
 
 * In real life error handling would be better :)
+
+## TODO
+
+* Add UI client (web page etc)
