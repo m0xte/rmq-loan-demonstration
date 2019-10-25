@@ -36,7 +36,7 @@ Replace correlationId with the result from the initial new quote request
 
 ## How it works:
 
-1. End user calls into quote service to request a new quote
+1. End user calls into quote service to request a new quote																																										
 2. This sends a message to each provider via redis queue
 3. The quote provider processes the quotes. Usually a latent operation.
 4. The quote provider publishes a response message to a response queue
@@ -44,8 +44,7 @@ Replace correlationId with the result from the initial new quote request
 
 ## Using with prometheus
 
-1. Prometheus metrics endpoint is exposed at http://localhost:6606:/metrics . Add this to your prom
-   scrape configuration.
+1. Prometheus metrics endpoint is exposed at /metrics . Add this to your prom scrape configuration.
 2. Exposes `quote_receiver_count` and `quote_aggregator_count` as messages are received and aggregated.
 
 ## Notes

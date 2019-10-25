@@ -12,6 +12,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using StackExchange.Redis;
+using Prometheus;
 
 namespace CTM.QuoteAPI
 {
@@ -59,6 +60,8 @@ namespace CTM.QuoteAPI
             app.UseDeveloperExceptionPage();
             app.UseRouting();
             app.UseStaticFiles();
+            app.UseMetricServer();
+            app.UseHttpMetrics();
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();

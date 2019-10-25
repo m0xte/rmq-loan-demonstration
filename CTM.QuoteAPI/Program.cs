@@ -15,9 +15,6 @@ namespace CTM.QuoteAPI
     {
         public static void Main(string[] args)
         {
-            var server = new MetricServer(hostname: "localhost", port: 6606);
-            server.Start();
-
             CreateWebHostBuilder(args).Build().Run();
         }
 
