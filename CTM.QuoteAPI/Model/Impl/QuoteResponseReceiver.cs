@@ -1,6 +1,7 @@
 ﻿using CTM.Contracts;
 using Newtonsoft.Json;
 using Prometheus;
+using Serilog;
 using StackExchange.Redis;
 using System.Threading;
 
@@ -42,6 +43,7 @@ namespace CTM.QuoteAPI.Model.Impl
                 }
 
                 var response = JsonConvert.DeserializeObject<QuoteResult>(message);
+                Log.Information("Received quote response");
                 quoteStore.AddQuoteResult(response);
                 PromReceivedCount.Inc();
             }

@@ -1,5 +1,6 @@
 ﻿using CTM.Contracts;
 using Prometheus;
+using Serilog;
 using System.Collections.Generic;
 
 namespace CTM.QuoteAPI.Model.Impl
@@ -19,6 +20,7 @@ namespace CTM.QuoteAPI.Model.Impl
         {
             foreach(var quoteProvider in quoteProviders)
             {
+                Log.Information("Aggregating quote");
                 quoteProvider.Send(quoteRequest);
                 PromAggregatedCount.Inc();
             }
