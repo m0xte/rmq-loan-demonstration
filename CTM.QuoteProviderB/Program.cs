@@ -1,15 +1,22 @@
 ﻿using CTM.Contracts;
 using CTM.QuoteProviderBase;
+using Jaeger;
+using Jaeger.Samplers;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using OpenTracing;
+using OpenTracing.Util;
 using StackExchange.Redis;
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 
 namespace CTM.QuoteProviderB
 {
     public class Program : BaseProgram
     {
-        public Program(IConnectionMultiplexer connectionMultiplexer, string receiveChannel, string replyChannel) :
-                   base(connectionMultiplexer, receiveChannel, replyChannel)
+        public Program(ITracer tracer, IConnectionMultiplexer connectionMultiplexer, ChannelConfig channelConfig) :
+                   base(tracer, connectionMultiplexer, channelConfig)
         {
         }
         protected override IEnumerable<QuoteResult> GetQuotes(QuoteRequest quoteRequest)
@@ -25,10 +32,35 @@ namespace CTM.QuoteProviderB
             };
         }
 
+
+        private static IServiceProvider Configure()
+        {
+            var loggerFactory = new LoggerFactory();
+
+            var chan = new ChannelConfig { ReceiveChannel = "QuoteProviderB", ReplyChannel = "QuoteResult" };
+
+            // set up trace
+            var sc = new ServiceCollection()
+                .AddSingleton<Program>()
+                .AddSingleton(chan)
+                .AddSingleton<IConnectionMultiplexer>(ConnectionMultiplexer.Connect("localhost"))
+                .AddLogging();
+
+            var serviceName = Assembly.GetEntryAssembly().GetName().Name;
+            var sampler = new ConstSampler(sample: true);
+            ITracer tracer = new Tracer.Builder(serviceName)
+                .WithLoggerFactory(loggerFactory)
+                .WithSampler(sampler)
+                .Build();
+            GlobalTracer.Register(tracer);
+            sc.AddSingleton(tracer);
+            return sc.BuildServiceProvider();
+        }
+
         static void Main()
         {
-            var cm = ConnectionMultiplexer.Connect("localhost");
-            new Program(cm, "QuoteProviderB", "QuoteResult").Run();
+            var sp = Configure();
+            sp.GetService<Program>().Run();
         }
     }
 }

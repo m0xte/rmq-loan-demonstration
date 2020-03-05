@@ -13,6 +13,14 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using StackExchange.Redis;
 using Prometheus;
+using Jaeger;
+using Jaeger.Samplers;
+using OpenTracing.Util;
+using OpenTracing.Contrib.NetCore;
+using System.Reflection;
+using Jaeger.Senders;
+using Jaeger.Reporters;
+using OpenTracing;
 
 namespace CTM.QuoteAPI
 {
@@ -36,18 +44,34 @@ namespace CTM.QuoteAPI
             // Register aggregator
             services.AddSingleton<IQuoteAggregator, QuoteAggregator>();
 
-            // Register individual quote providers
-            services.AddSingleton<IEnumerable<IQuoteProvider>>(new List<IQuoteProvider>
-            {
-                new GenericQuoteProvider(cm, "QuoteProviderA"),
-                new GenericQuoteProvider(cm, "QuoteProviderB")
-            });
-
             // Register redis connection
             services.AddSingleton<IConnectionMultiplexer>(cm);
 
             var quoteResponseReceiver = new QuoteResponseReceiver(cm, quoteStore, "QuoteResult");
             quoteResponseReceiver.StartReceiving();
+
+            services.AddSingleton(serviceProvider =>
+            {
+                var serviceName = Assembly.GetEntryAssembly().GetName().Name;
+                var loggerFactory = serviceProvider.GetRequiredService<ILoggerFactory>();
+                var sampler = new ConstSampler(sample: true);
+                ITracer tracer = new Tracer.Builder(serviceName)
+                    .WithLoggerFactory(loggerFactory)
+                    .WithSampler(sampler)
+                    .Build();
+
+                GlobalTracer.Register(tracer);
+                return tracer;
+            });
+
+            services.AddOpenTracing();
+            // Register individual quote providers
+            services.AddSingleton<IEnumerable<IQuoteProvider>>(new List<IQuoteProvider>
+            {
+                new GenericQuoteProvider(GlobalTracer.Instance, cm, "QuoteProviderA"),
+                new GenericQuoteProvider(GlobalTracer.Instance, cm, "QuoteProviderB")
+            });
+
 
             services
                 .AddControllers()

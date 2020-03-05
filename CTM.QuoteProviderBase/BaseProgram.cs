@@ -1,8 +1,16 @@
 ﻿using CTM.Contracts;
+using Jaeger;
+using Jaeger.Samplers;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using OpenTracing;
+using OpenTracing.Propagation;
+using OpenTracing.Util;
 using StackExchange.Redis;
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using System.Threading;
 
 namespace CTM.QuoteProviderBase
@@ -10,14 +18,14 @@ namespace CTM.QuoteProviderBase
     public abstract class BaseProgram
     {
         IConnectionMultiplexer connectionMultiplexer;
-        string receiveChannel;
-        string replyChannel;
+        ChannelConfig channelConfig;
+        ITracer tracer;
 
-        protected BaseProgram(IConnectionMultiplexer connectionMultiplexer, string receiveChannel, string replyChannel)
+        protected BaseProgram(ITracer tracer, IConnectionMultiplexer connectionMultiplexer, ChannelConfig channelConfig)
         {
             this.connectionMultiplexer = connectionMultiplexer;
-            this.receiveChannel = receiveChannel;
-            this.replyChannel = replyChannel;
+            this.channelConfig = channelConfig;
+            this.tracer = tracer;
         }
      
         /// <summary>
@@ -28,29 +36,41 @@ namespace CTM.QuoteProviderBase
         protected abstract IEnumerable<QuoteResult> GetQuotes(QuoteRequest quoteRequest);
         
         public void Run()
-        { 
-            Console.WriteLine($"Servicing quotes in channel {receiveChannel}");
+        {
+            Console.WriteLine($"Servicing quotes in channel {channelConfig.ReceiveChannel}");
             Console.WriteLine("Waiting for work...");
 
             var db = connectionMultiplexer.GetDatabase();
-            while(true)
+            while (true)
             {
-                var message = db.ListRightPop(receiveChannel);
+                var message = db.ListRightPop(channelConfig.ReceiveChannel);
                 if (message.IsNull)
                 {
-                    Thread.Sleep(500);
+                    Thread.Sleep(50);
                     continue;
                 }
 
                 var request = JsonConvert.DeserializeObject<QuoteRequest>(message);
-                Console.WriteLine($"Handling request with correlation ID {request.CorrelationId}");
-                var results = GetQuotes(request);
-                foreach (var result in results)
+                var traceContext = tracer.Extract(BuiltinFormats.TextMap, new TextMapExtractAdapter(request.TraceContext));
+                using (var scope = tracer.BuildSpan("receive")
+                    .AddReference(References.FollowsFrom, traceContext)
+                    .StartActive(finishSpanOnDispose: true))
                 {
-                    var jsonResult = JsonConvert.SerializeObject(result);
-                    db.ListLeftPush(replyChannel, jsonResult);
+                    
+                    Console.WriteLine($"Handling request with correlation ID {request.CorrelationId}");
+                    var results = GetQuotes(request);
+                    foreach (var result in results)
+                    {
+                        using (var scopeInner = tracer.BuildSpan("reply")
+                            .StartActive(finishSpanOnDispose: true))
+                        {
+                            var jsonResult = JsonConvert.SerializeObject(result);
+                            db.ListLeftPush(channelConfig.ReplyChannel, jsonResult);
+                        }
+                    }
                 }
             }
         }
+
     }
 }

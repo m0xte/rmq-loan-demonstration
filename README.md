@@ -10,6 +10,7 @@ A simple Redis / .Net Core architectural demonstration
 
 * Computer
 * .Net Core 3
+* Jaeger Tracing (optional)
 
 ## Instructions
 
@@ -19,6 +20,7 @@ there should be no portability issues with this example.
 1. Install redis-server in WSL or natively
 2. Start redis-server in WSL 
 3. Set all projects to run on startup if using VS or run using dotnet run (both quote providers and the quote API server)
+4. Optionally run a Jaeger "all in one" instance to collect trace data
 
 ## To use:
 
